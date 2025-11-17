@@ -2,6 +2,7 @@ package api
 
 import (
 	"sales_analytics/config"
+	"sales_analytics/pkg/repository"
 
 	"github.com/gofiber/fiber/v2"
 )
