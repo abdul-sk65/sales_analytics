@@ -44,3 +44,8 @@ func NewMongoRepository(ctx context.Context, cfg *config.Config) (*MongoReposito
 func (r *MongoRepository) Disconnect(ctx context.Context) error {
 	return r.client.Disconnect(ctx)
 }
+
+// GetCollection returns a MongoDB collection
+func (r *MongoRepository) GetCollection(name string) *mongo.Collection {
+	return r.db.Collection(name)
+}
