@@ -10,11 +10,13 @@ import (
 
 // Config holds all configuration for the application
 type Config struct {
-	MongoURI       string
-	DatabaseName   string
-	CSVFilePath    string
-	Port           string
-	WorkerPoolSize int
+	MongoURI            string
+	DatabaseName        string
+	CSVFilePath         string
+	Port                string
+	WorkerPoolSize      int
+	CronEnabled         bool
+	DefaultCronInterval string
 }
 
 // Load reads configuration from environment variables
@@ -31,12 +33,19 @@ func Load() *Config {
 		}
 	}
 
+	cronEnabled := true
+	if ce := os.Getenv("CRON_ENABLED"); ce == "false" {
+		cronEnabled = false
+	}
+
 	return &Config{
-		MongoURI:       getEnv("MONGODB_URI", "mongodb://localhost:27017"),
-		DatabaseName:   getEnv("DATABASE_NAME", "sales_analytics"),
-		CSVFilePath:    getEnv("CSV_FILE_PATH", "./data/sales_data.csv"),
-		Port:           getEnv("PORT", "8080"),
-		WorkerPoolSize: workerPoolSize,
+		MongoURI:            getEnv("MONGODB_URI", "mongodb://localhost:27017"),
+		DatabaseName:        getEnv("DATABASE_NAME", "sales_analytics"),
+		CSVFilePath:         getEnv("CSV_FILE_PATH", "./data/sales_data.csv"),
+		Port:                getEnv("PORT", "8080"),
+		WorkerPoolSize:      workerPoolSize,
+		CronEnabled:         cronEnabled,
+		DefaultCronInterval: getEnv("DEFAULT_CRON_INTERVAL", "24h"),
 	}
 }
 
