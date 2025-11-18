@@ -4,7 +4,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-// CreateCronJobRequest represents the request body for creating a cron job
+// CreateCronJobRequest request body for creating a cron job
 type CreateCronJobRequest struct {
 	Interval string `json:"interval"`
 }

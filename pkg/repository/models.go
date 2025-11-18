@@ -6,7 +6,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-// Customer represents a customer entity
+// Customer  customer entity
 type Customer struct {
 	ID         primitive.ObjectID `bson:"_id,omitempty"`
 	CustomerID string             `bson:"customer_id" json:"customer_id"`
@@ -15,7 +15,7 @@ type Customer struct {
 	Address    string             `bson:"address" json:"address"`
 }
 
-// Product represents a product entity
+// Product  product entity
 type Product struct {
 	ID        primitive.ObjectID `bson:"_id,omitempty"`
 	ProductID string             `bson:"product_id" json:"product_id"`
@@ -25,7 +25,7 @@ type Product struct {
 	Discount  float64            `bson:"discount" json:"discount"`
 }
 
-// Order represents an order entity
+// Order n order entity
 type Order struct {
 	ID            primitive.ObjectID `bson:"_id,omitempty"`
 	OrderID       string             `bson:"order_id" json:"order_id"`
@@ -38,7 +38,7 @@ type Order struct {
 	PaymentMethod string             `bson:"payment_method" json:"payment_method"`
 }
 
-// RefreshLog represents a data refresh log entry
+// RefreshLog  data refresh log entry
 type RefreshLog struct {
 	ID         primitive.ObjectID `bson:"_id,omitempty"`
 	StartTime  time.Time          `bson:"start_time" json:"start_time"`
@@ -48,7 +48,7 @@ type RefreshLog struct {
 	ErrorMsg   string             `bson:"error_msg,omitempty" json:"error_msg,omitempty"`
 }
 
-// CSVRecord represents a row from the CSV file
+// CSVRecord  row from the CSV file
 type CSVRecord struct {
 	OrderID       string
 	ProductID     string
