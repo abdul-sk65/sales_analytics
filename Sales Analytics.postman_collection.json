@@ -1,0 +1,181 @@
+{
+	"info": {
+		"_postman_id": "0550b453-aef4-47ed-ae93-ecc32d861fb2",
+		"name": "Sales Analytics",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "47624330",
+		"_collection_link": "https://www.postman.com/abdul-ahad-ansari-new-9950090/workspace/sales-analytics/collection/47624330-0550b453-aef4-47ed-ae93-ecc32d861fb2?action=share&source=collection_link&creator=47624330"
+	},
+	"item": [
+		{
+			"name": "Data Refresh",
+			"item": [
+				{
+					"name": "refresh",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{url}}/api/v1/data/refresh",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"data",
+								"refresh"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "logs",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{url}}/api/v1/data/logs",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"data",
+								"logs"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Revenue",
+			"item": [
+				{
+					"name": "total",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{url}}/api/v1/revenue/total?start_date=2024-01-01&end_date=2024-12-31",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"revenue",
+								"total"
+							],
+							"query": [
+								{
+									"key": "start_date",
+									"value": "2024-01-01"
+								},
+								{
+									"key": "end_date",
+									"value": "2024-12-31"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "category",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{url}}/api/v1/revenue/category?start_date=2024-01-01&end_date=2024-12-31",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"revenue",
+								"category"
+							],
+							"query": [
+								{
+									"key": "start_date",
+									"value": "2024-01-01"
+								},
+								{
+									"key": "end_date",
+									"value": "2024-12-31"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "product",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{url}}/api/v1/revenue/product?start_date=2024-01-01&end_date=2024-12-31",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"revenue",
+								"product"
+							],
+							"query": [
+								{
+									"key": "start_date",
+									"value": "2024-01-01"
+								},
+								{
+									"key": "end_date",
+									"value": "2024-12-31"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "region",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{url}}/api/v1/revenue/region?start_date=2024-01-01&end_date=2024-12-31",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"revenue",
+								"region"
+							],
+							"query": [
+								{
+									"key": "start_date",
+									"value": "2024-01-01"
+								},
+								{
+									"key": "end_date",
+									"value": "2024-12-31"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	]
+}
