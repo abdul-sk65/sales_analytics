@@ -11,6 +11,9 @@ A high-performance sales analytics system built with Go, Fiber framework, and Mo
 - **Data Refresh Mechanism**: On-demand data refresh with comprehensive logging
 - **Robust Error Handling**: Graceful error management throughout the application
 - **Performance Optimized**: Database indexes for fast query execution
+- **Automated Data Refresh**: Cron job scheduler for periodic data updates
+- **Single Job Guarantee**: Only one cron job active at a time with auto-replacement
+- **Graceful Shutdown**: Clean cron job cleanup on server crash or restart
 
 ## Architecture
 
@@ -21,11 +24,14 @@ kenshilabs/
 ├── config/
 │   └── config.go            # Configuration management
 ├── pkg/
+│   ├── scheduler/
+│   │   └── scheduler.go
 │   └── repository/
 │       ├── models.go        # Data models
 │       ├── repository.go    # Database operations
 │       ├── loader.go        # CSV loading with worker pool
 │       └── analytics.go     # Revenue calculations
+|
 ├── api/
 │   ├── routes.go            # Route definitions
 │   └── handler.go           # HTTP handlers
@@ -110,6 +116,8 @@ DATABASE_NAME=sales_analytics
 CSV_FILE_PATH=./data/sales_data.csv
 PORT=8080
 WORKER_POOL_SIZE=10
+CRON_ENABLED=true
+DEFAULT_CRON_INTERVAL=24h
 ```
 
 5. Create data directory and add CSV file:
@@ -123,7 +131,7 @@ mkdir -p data
 
 ```bash
 # If using Docker
-docker run -d -p 27017:27017 --name mongodb mongo:latest
+docker run -d -p 27017:27017 --name mongodb_sales_analytics mongo:latest
 
 # Or start your local MongoDB instance
 mongod
@@ -288,6 +296,111 @@ Calculates revenue grouped by region.
       "total_revenue": 15000.0
     }
   ]
+}
+```
+
+### Cron Job Management
+
+#### Create/Replace Cron Job
+
+**POST** `/api/v1/cron/create`
+
+Creates a new cron job for automated data refresh. If a cron job already exists, it will be **automatically replaced** with the new one.
+
+**Request Body:**
+
+```json
+{
+  "interval": "24h"
+}
+```
+
+**Supported Intervals:**
+
+- Minutes: `"30m"`, `"45m"`
+- Hours: `"1h"`, `"6h"`, `"12h"`, `"24h"`
+- Custom: Any valid duration string (e.g., `"2h30m"`)
+
+**Response:**
+
+```json
+{
+  "message": "Cron job created successfully (replaced existing if any)",
+  "interval": "24h",
+  "status": {
+    "active": true,
+    "job_id": 1,
+    "next_run": "2024-01-16T10:00:00Z",
+    "previous_run": "2024-01-15T10:00:00Z"
+  }
+}
+```
+
+**Examples:**
+
+```bash
+# Create a cron job that runs every 24 hours
+curl -X POST http://localhost:8080/api/v1/cron/create \
+  -H "Content-Type: application/json" \
+  -d '{"interval":"24h"}'
+
+```
+
+#### Delete Cron Job
+
+**POST** `/api/v1/cron/delete`
+
+Deletes the currently active cron job.
+
+**Response:**
+
+```json
+{
+  "message": "Cron job deleted successfully"
+}
+```
+
+**Error Response (No Active Job):**
+
+```json
+{
+  "error": "no active cron job to delete"
+}
+```
+
+**Example:**
+
+```bash
+curl -X POST http://localhost:8080/api/v1/cron/delete
+```
+
+#### Get Cron Job Status
+
+**GET** `/api/v1/cron/status`
+
+Returns the status of the current cron job, including next and previous run times.
+
+**Response (Active Job):**
+
+```json
+{
+  "status": {
+    "active": true,
+    "job_id": 1,
+    "next_run": "2024-01-16T10:00:00Z",
+    "previous_run": "2024-01-15T10:00:00Z"
+  }
+}
+```
+
+**Response (No Active Job):**
+
+```json
+{
+  "status": {
+    "active": false,
+    "job_id": 0
+  }
 }
 ```
 
