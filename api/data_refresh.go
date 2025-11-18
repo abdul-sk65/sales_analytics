@@ -33,3 +33,20 @@ func (h *Handler) RefreshData(c *fiber.Ctx) error {
 		"status":  "processing",
 	})
 }
+
+// GetRefreshLogs returns recent refresh logs
+func (h *Handler) GetRefreshLogs(c *fiber.Ctx) error {
+	ctx, cancel := context.WithTimeout(c.Context(), 10*time.Second)
+	defer cancel()
+
+	logs, err := h.repo.GetRefreshLogs(ctx, 10)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "Failed to fetch refresh logs",
+		})
+	}
+
+	return c.JSON(fiber.Map{
+		"logs": logs,
+	})
+}
