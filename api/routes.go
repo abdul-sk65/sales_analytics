@@ -23,7 +23,7 @@ func SetupRoutes(app *fiber.App, repo *repository.MongoRepository, cfg *config.C
 	// Revenue analytics endpoints
 	revenue := api.Group("/revenue")
 	revenue.Get("/total", handler.GetTotalRevenue)
-	revenue.Get("/by-product", handler.GetRevenueByProduct)
-	revenue.Get("/by-category", handler.GetRevenueByCategory)
-	revenue.Get("/by-region", handler.GetRevenueByRegion)
+	revenue.Get("/product", handler.GetRevenueByProduct)
+	revenue.Get("/category", handler.GetRevenueByCategory)
+	revenue.Get("/region", handler.GetRevenueByRegion)
 }
