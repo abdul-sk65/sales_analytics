@@ -34,7 +34,10 @@ kenshilabs/
 |
 ├── api/
 │   ├── routes.go            # Route definitions
-│   └── handler.go           # HTTP handlers
+│   ├── data_refresh.go      # data reload/refresh handlers
+│   ├── refresh_scheduler.go # cron data refresh scheduler handlers
+│   ├── revenue.go           # Sales Revenue handlers
+│   └── handler.go           # handlers
 ├── data/
 │   └── sales_data.csv       # Sample CSV data
 ├── .env                     # Environment variables
@@ -348,7 +351,7 @@ curl -X POST http://localhost:8080/api/v1/cron/create \
 
 #### Delete Cron Job
 
-**POST** `/api/v1/cron/delete`
+**DELETE** `/api/v1/cron/delete`
 
 Deletes the currently active cron job.
 
@@ -371,7 +374,7 @@ Deletes the currently active cron job.
 **Example:**
 
 ```bash
-curl -X POST http://localhost:8080/api/v1/cron/delete
+curl -X DELETE http://localhost:8080/api/v1/cron/delete
 ```
 
 #### Get Cron Job Status
