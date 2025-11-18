@@ -25,7 +25,7 @@ func SetupRoutes(app *fiber.App, repo *repository.MongoRepository, cfg *config.C
 	// Cron job management endpoints
 	cron := api.Group("/cron")
 	cron.Post("/create", handler.CreateCronJob)
-	cron.Post("/delete", handler.DeleteCronJob)
+	cron.Delete("/delete", handler.DeleteCronJob)
 	cron.Get("/status", handler.GetCronStatus)
 
 	// Revenue analytics endpoints

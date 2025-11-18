@@ -6,6 +6,7 @@ import (
 
 	"sales_analytics/config"
 
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
@@ -36,8 +37,47 @@ func NewMongoRepository(ctx context.Context, cfg *config.Config) (*MongoReposito
 		db:     db,
 		config: cfg,
 	}
+	// Create indexes
+	if err := repo.createIndexes(ctx); err != nil {
+		return nil, fmt.Errorf("failed to create indexes: %w", err)
+	}
 
 	return repo, nil
+}
+
+// createIndexes creates necessary indexes for optimal query performance
+func (r *MongoRepository) createIndexes(ctx context.Context) error {
+	// Customer indexes
+	customerIndexes := []mongo.IndexModel{
+		{Keys: bson.D{{Key: "customer_id", Value: 1}}, Options: options.Index().SetUnique(true)},
+		{Keys: bson.D{{Key: "email", Value: 1}}},
+	}
+	if _, err := r.db.Collection("customers").Indexes().CreateMany(ctx, customerIndexes); err != nil {
+		return err
+	}
+
+	// Product indexes
+	productIndexes := []mongo.IndexModel{
+		{Keys: bson.D{{Key: "product_id", Value: 1}}, Options: options.Index().SetUnique(true)},
+		{Keys: bson.D{{Key: "category", Value: 1}}},
+	}
+	if _, err := r.db.Collection("products").Indexes().CreateMany(ctx, productIndexes); err != nil {
+		return err
+	}
+
+	// Order indexes
+	orderIndexes := []mongo.IndexModel{
+		{Keys: bson.D{{Key: "order_id", Value: 1}}, Options: options.Index().SetUnique(true)},
+		{Keys: bson.D{{Key: "customer_id", Value: 1}}},
+		{Keys: bson.D{{Key: "product_id", Value: 1}}},
+		{Keys: bson.D{{Key: "date_of_sale", Value: 1}}},
+		{Keys: bson.D{{Key: "region", Value: 1}}},
+	}
+	if _, err := r.db.Collection("orders").Indexes().CreateMany(ctx, orderIndexes); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // Disconnect closes the MongoDB connection
