@@ -12,7 +12,7 @@ import (
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 // DataLoader handles CSV data loading with worker pool
@@ -117,79 +117,80 @@ func (dl *DataLoader) worker(ctx context.Context, id int, records <-chan CSVReco
 
 func (dl *DataLoader) processRecord(ctx context.Context, record CSVRecord) error {
 
-	// ----------- CUSTOMER CHECK -------------
+	// ----------- CUSTOMER  -------------
 	customerColl := dl.repo.GetCollection("customers")
-	var existingCust Customer
-	err := customerColl.FindOne(ctx, bson.M{"customer_id": record.CustomerID}).Decode(&existingCust)
-	if err == mongo.ErrNoDocuments {
-		// Insert new customer
-		customer := Customer{
-			CustomerID: record.CustomerID,
-			Name:       record.CustomerName,
-			Email:      record.CustomerEmail,
-			Address:    record.CustomerAddr,
-		}
-		if _, err := customerColl.InsertOne(ctx, customer); err != nil {
-			return fmt.Errorf("failed to insert customer: %w", err)
-		}
-	} else if err != nil {
-		return fmt.Errorf("failed to query customer: %w", err)
+
+	customer := Customer{
+		CustomerID: record.CustomerID,
+		Name:       record.CustomerName,
+		Email:      record.CustomerEmail,
+		Address:    record.CustomerAddr,
 	}
 
-	// ----------- PRODUCT CHECK -------------
+	_, err := customerColl.UpdateOne( // Insert Only If Not Exists
+		ctx,
+		bson.M{"customer_id": customer.CustomerID},
+		bson.M{"$setOnInsert": customer},
+		options.Update().SetUpsert(true),
+	)
+	if err != nil {
+		return fmt.Errorf("failed to upsert customer: %w", err)
+	}
+
+	// ----------- PRODUCT  -------------
 	productColl := dl.repo.GetCollection("products")
-	var existingProduct Product
-	err = productColl.FindOne(ctx, bson.M{"product_id": record.ProductID}).Decode(&existingProduct)
-	if err == mongo.ErrNoDocuments {
 
-		unitPrice, _ := strconv.ParseFloat(record.UnitPrice, 64)
-		discount, _ := strconv.ParseFloat(record.Discount, 64)
+	unitPrice, _ := strconv.ParseFloat(record.UnitPrice, 64)
+	discount, _ := strconv.ParseFloat(record.Discount, 64)
 
-		product := Product{
-			ProductID: record.ProductID,
-			Name:      record.ProductName,
-			Category:  record.Category,
-			UnitPrice: unitPrice,
-			Discount:  discount,
-		}
-		if _, err := productColl.InsertOne(ctx, product); err != nil {
-			return fmt.Errorf("failed to insert product: %w", err)
-		}
-	} else if err != nil {
-		return fmt.Errorf("failed to query product: %w", err)
+	product := Product{
+		ProductID: record.ProductID,
+		Name:      record.ProductName,
+		Category:  record.Category,
+		UnitPrice: unitPrice,
+		Discount:  discount,
 	}
 
-	// ----------- ORDER CHECK -------------
+	_, err = productColl.UpdateOne( // Insert Only If Not Exists
+		ctx,
+		bson.M{"product_id": product.ProductID},
+		bson.M{"$setOnInsert": product},
+		options.Update().SetUpsert(true),
+	)
+	if err != nil {
+		return fmt.Errorf("failed to upsert product: %w", err)
+	}
+
+	// ----------- ORDER  -------------
 	orderColl := dl.repo.GetCollection("orders")
-	var existingOrder Order
-	err = orderColl.FindOne(ctx, bson.M{"order_id": record.OrderID}).Decode(&existingOrder)
-	if err == mongo.ErrNoDocuments {
 
-		dateOfSale, err := time.Parse("2006-01-02", record.DateOfSale)
-		if err != nil {
-			return fmt.Errorf("failed to parse date: %w", err)
-		}
+	dateOfSale, err := time.Parse("2006-01-02", record.DateOfSale)
+	if err != nil {
+		return fmt.Errorf("failed to parse order date: %w", err)
+	}
 
-		quantitySold, _ := strconv.Atoi(record.QuantitySold)
-		shippingCost, _ := strconv.ParseFloat(record.ShippingCost, 64)
+	quantitySold, _ := strconv.Atoi(record.QuantitySold)
+	shippingCost, _ := strconv.ParseFloat(record.ShippingCost, 64)
 
-		order := Order{
-			OrderID:       record.OrderID,
-			ProductID:     record.ProductID,
-			CustomerID:    record.CustomerID,
-			Region:        record.Region,
-			DateOfSale:    dateOfSale,
-			QuantitySold:  quantitySold,
-			ShippingCost:  shippingCost,
-			PaymentMethod: record.PaymentMethod,
-		}
+	order := Order{
+		OrderID:       record.OrderID,
+		ProductID:     record.ProductID,
+		CustomerID:    record.CustomerID,
+		Region:        record.Region,
+		DateOfSale:    dateOfSale,
+		QuantitySold:  quantitySold,
+		ShippingCost:  shippingCost,
+		PaymentMethod: record.PaymentMethod,
+	}
 
-		if _, err := orderColl.InsertOne(ctx, order); err != nil {
-			return fmt.Errorf("failed to insert order: %w", err)
-		}
-
-	} else if err != nil {
-		return fmt.Errorf("failed to query order: %w", err)
+	_, err = orderColl.UpdateOne( // Insert Only If Not Exists
+		ctx,
+		bson.M{"order_id": order.OrderID},
+		bson.M{"$setOnInsert": order},
+		options.Update().SetUpsert(true),
+	)
+	if err != nil {
+		return fmt.Errorf("failed to upsert order: %w", err)
 	}
 
 	return nil
