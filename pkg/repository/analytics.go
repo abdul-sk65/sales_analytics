@@ -9,31 +9,31 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-// RevenueResult represents revenue calculation result
+// RevenueResult revenue calculation result
 type RevenueResult struct {
 	TotalRevenue float64 `bson:"total_revenue" json:"total_revenue"`
 }
 
-// ProductRevenueResult represents revenue by product
+// ProductRevenueResult revenue by product
 type ProductRevenueResult struct {
 	ProductID    string  `bson:"_id" json:"product_id"`
 	ProductName  string  `bson:"product_name" json:"product_name"`
 	TotalRevenue float64 `bson:"total_revenue" json:"total_revenue"`
 }
 
-// CategoryRevenueResult represents revenue by category
+// CategoryRevenueResult revenue by category
 type CategoryRevenueResult struct {
 	Category     string  `bson:"_id" json:"category"`
 	TotalRevenue float64 `bson:"total_revenue" json:"total_revenue"`
 }
 
-// RegionRevenueResult represents revenue by region
+// RegionRevenueResult revenue by region
 type RegionRevenueResult struct {
 	Region       string  `bson:"_id" json:"region"`
 	TotalRevenue float64 `bson:"total_revenue" json:"total_revenue"`
 }
 
-// CalculateTotalRevenue calculates total revenue for a date range
+// CalculateTotalRevenue total revenue for a date range
 func (r *MongoRepository) CalculateTotalRevenue(ctx context.Context, startDate, endDate time.Time) (float64, error) {
 	pipeline := mongo.Pipeline{
 		{{Key: "$match", Value: bson.M{
@@ -57,10 +57,10 @@ func (r *MongoRepository) CalculateTotalRevenue(ctx context.Context, startDate, 
 					"$multiply": bson.A{
 						"$quantity_sold",
 						bson.M{"$subtract": bson.A{
-							"$product.unit_price", // CHANGED: from $unit_price
+							"$product.unit_price",
 							bson.M{"$multiply": bson.A{
-								"$product.unit_price", // CHANGED: from $unit_price
-								"$product.discount",   // CHANGED: from $discount
+								"$product.unit_price",
+								"$product.discount",
 							}},
 						}},
 					},
@@ -86,7 +86,7 @@ func (r *MongoRepository) CalculateTotalRevenue(ctx context.Context, startDate, 
 	return 0, nil
 }
 
-// CalculateRevenueByProduct calculates revenue grouped by product
+// CalculateRevenueByProduct revenue grouped by product
 func (r *MongoRepository) CalculateRevenueByProduct(ctx context.Context, startDate, endDate time.Time) ([]ProductRevenueResult, error) {
 	pipeline := mongo.Pipeline{
 		{{Key: "$match", Value: bson.M{
@@ -111,10 +111,10 @@ func (r *MongoRepository) CalculateRevenueByProduct(ctx context.Context, startDa
 					"$multiply": bson.A{
 						"$quantity_sold",
 						bson.M{"$subtract": bson.A{
-							"$product.unit_price", // CHANGED
+							"$product.unit_price",
 							bson.M{"$multiply": bson.A{
-								"$product.unit_price", // CHANGED
-								"$product.discount",   // CHANGED
+								"$product.unit_price",
+								"$product.discount",
 							}},
 						}},
 					},
@@ -138,7 +138,7 @@ func (r *MongoRepository) CalculateRevenueByProduct(ctx context.Context, startDa
 	return results, nil
 }
 
-// CalculateRevenueByCategory calculates revenue grouped by category
+// CalculateRevenueByCategory revenue grouped by category
 func (r *MongoRepository) CalculateRevenueByCategory(ctx context.Context, startDate, endDate time.Time) ([]CategoryRevenueResult, error) {
 	pipeline := mongo.Pipeline{
 		{{Key: "$match", Value: bson.M{
@@ -162,10 +162,10 @@ func (r *MongoRepository) CalculateRevenueByCategory(ctx context.Context, startD
 					"$multiply": bson.A{
 						"$quantity_sold",
 						bson.M{"$subtract": bson.A{
-							"$product.unit_price", // CHANGED
+							"$product.unit_price",
 							bson.M{"$multiply": bson.A{
-								"$product.unit_price", // CHANGED
-								"$product.discount",   // CHANGED
+								"$product.unit_price",
+								"$product.discount",
 							}},
 						}},
 					},
@@ -189,7 +189,7 @@ func (r *MongoRepository) CalculateRevenueByCategory(ctx context.Context, startD
 	return results, nil
 }
 
-// CalculateRevenueByRegion calculates revenue grouped by region
+// CalculateRevenueByRegion revenue grouped by region
 func (r *MongoRepository) CalculateRevenueByRegion(ctx context.Context, startDate, endDate time.Time) ([]RegionRevenueResult, error) {
 	pipeline := mongo.Pipeline{
 		{{Key: "$match", Value: bson.M{
@@ -213,10 +213,10 @@ func (r *MongoRepository) CalculateRevenueByRegion(ctx context.Context, startDat
 					"$multiply": bson.A{
 						"$quantity_sold",
 						bson.M{"$subtract": bson.A{
-							"$product.unit_price", // CHANGED
+							"$product.unit_price",
 							bson.M{"$multiply": bson.A{
-								"$product.unit_price", // CHANGED
-								"$product.discount",   // CHANGED
+								"$product.unit_price",
+								"$product.discount",
 							}},
 						}},
 					},
