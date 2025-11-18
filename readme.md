@@ -86,7 +86,7 @@ kenshilabs/
 
 ### Prerequisites
 
-- Go 1.21 or higher
+- Go 1.24 or higher
 - MongoDB 4.4 or higher
 - Git
 
@@ -149,6 +149,10 @@ go run cmd/main.go
 The server will start on `http://localhost:8080`
 
 ## API Endpoints
+
+**POSTMAN COLLECTION JSON ->** ./sales_analytics/docs/SalesAnalytics.postman_collection.json
+
+###
 
 ### Health Check
 
