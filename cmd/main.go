@@ -11,6 +11,7 @@ import (
 	"sales_analytics/api"
 	"sales_analytics/config"
 	"sales_analytics/pkg/repository"
+	"sales_analytics/pkg/scheduler"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/logger"
@@ -33,6 +34,13 @@ func main() {
 
 	log.Println("Successfully connected to MongoDB")
 
+	// Initialize Scheduler
+	sched := scheduler.NewScheduler(repo, cfg)
+	sched.Start()
+	defer sched.Stop() // Ensures cleanup on server crash/shutdown
+
+	log.Println("Cron scheduler initialized")
+
 	// Initialize Fiber app
 	app := fiber.New(fiber.Config{
 		ErrorHandler: customErrorHandler,
@@ -43,7 +51,7 @@ func main() {
 	app.Use(logger.New())
 
 	// Setup routes
-	api.SetupRoutes(app, repo, cfg)
+	api.SetupRoutes(app, repo, cfg, sched)
 
 	// Graceful shutdown
 	c := make(chan os.Signal, 1)
@@ -52,6 +60,8 @@ func main() {
 	go func() {
 		<-c
 		log.Println("Shutting down server...")
+		log.Println("Stopping cron scheduler...")
+		sched.Stop() // Clean up cron jobs before shutdown
 		_ = app.Shutdown()
 	}()
 
