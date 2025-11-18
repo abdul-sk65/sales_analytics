@@ -50,11 +50,6 @@ func (dl *DataLoader) LoadCSV(ctx context.Context, filepath string) error {
 
 	log.Printf("CSV Header: %v", header)
 
-	// // Clear existing data
-	// if err := dl.clearCollections(ctx); err != nil {
-	// 	return dl.logRefresh(ctx, startTime, "failed", 0, fmt.Sprintf("failed to clear collections: %v", err))
-	// }
-
 	// Create channels for worker pool
 	recordChan := make(chan CSVRecord, dl.workerSize*2)
 	errorChan := make(chan error, 1)
@@ -216,20 +211,6 @@ func (dl *DataLoader) parseCSVRow(row []string) CSVRecord {
 		CustomerAddr:  row[14],
 	}
 }
-
-// // clearCollections removes all documents from collections
-// func (dl *DataLoader) clearCollections(ctx context.Context) error {
-// 	collections := []string{"customers", "products", "orders"}
-
-// 	for _, coll := range collections {
-// 		if _, err := dl.repo.GetCollection(coll).DeleteMany(ctx, bson.M{}); err != nil {
-// 			return err
-// 		}
-// 	}
-
-// 	log.Println("Cleared all collections")
-// 	return nil
-// }
 
 // logRefresh logs the data refresh operation
 func (dl *DataLoader) logRefresh(ctx context.Context, startTime time.Time, status string, rowsLoaded int, errorMsg string) error {
