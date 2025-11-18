@@ -18,7 +18,7 @@ func SetupRoutes(app *fiber.App, repo *repository.MongoRepository, cfg *config.C
 	api := app.Group("/api/v1")
 	dataRefresh := api.Group("/data")
 	dataRefresh.Post("/refresh", handler.RefreshData)
-	dataRefresh.Get("/refresh/logs", handler.GetRefreshLogs)
+	dataRefresh.Get("/logs", handler.GetRefreshLogs)
 
 	// Revenue analytics endpoints
 	revenue := api.Group("/revenue")

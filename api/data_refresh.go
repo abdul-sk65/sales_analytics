@@ -15,8 +15,7 @@ func (h *Handler) RefreshData(c *fiber.Ctx) error {
 	log.Println("Data refresh triggered")
 
 	// Create a background context with timeout
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
-	defer cancel()
+	ctx, _ := context.WithTimeout(context.Background(), 5*time.Minute)
 
 	// Create loader and load data
 	loader := repository.NewDataLoader(h.repo, h.config.WorkerPoolSize)
