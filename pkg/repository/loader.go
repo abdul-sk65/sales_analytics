@@ -12,7 +12,7 @@ import (
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/mongo/options"
+	"go.mongodb.org/mongo-driver/mongo"
 )
 
 // DataLoader handles CSV data loading with worker pool
@@ -50,10 +50,10 @@ func (dl *DataLoader) LoadCSV(ctx context.Context, filepath string) error {
 
 	log.Printf("CSV Header: %v", header)
 
-	// Clear existing data
-	if err := dl.clearCollections(ctx); err != nil {
-		return dl.logRefresh(ctx, startTime, "failed", 0, fmt.Sprintf("failed to clear collections: %v", err))
-	}
+	// // Clear existing data
+	// if err := dl.clearCollections(ctx); err != nil {
+	// 	return dl.logRefresh(ctx, startTime, "failed", 0, fmt.Sprintf("failed to clear collections: %v", err))
+	// }
 
 	// Create channels for worker pool
 	recordChan := make(chan CSVRecord, dl.workerSize*2)
@@ -115,67 +115,81 @@ func (dl *DataLoader) worker(ctx context.Context, id int, records <-chan CSVReco
 	}
 }
 
-// processRecord processes a single CSV record
 func (dl *DataLoader) processRecord(ctx context.Context, record CSVRecord) error {
-	// Upsert customer
-	customer := Customer{
-		CustomerID: record.CustomerID,
-		Name:       record.CustomerName,
-		Email:      record.CustomerEmail,
-		Address:    record.CustomerAddr,
+
+	// ----------- CUSTOMER CHECK -------------
+	customerColl := dl.repo.GetCollection("customers")
+	var existingCust Customer
+	err := customerColl.FindOne(ctx, bson.M{"customer_id": record.CustomerID}).Decode(&existingCust)
+	if err == mongo.ErrNoDocuments {
+		// Insert new customer
+		customer := Customer{
+			CustomerID: record.CustomerID,
+			Name:       record.CustomerName,
+			Email:      record.CustomerEmail,
+			Address:    record.CustomerAddr,
+		}
+		if _, err := customerColl.InsertOne(ctx, customer); err != nil {
+			return fmt.Errorf("failed to insert customer: %w", err)
+		}
+	} else if err != nil {
+		return fmt.Errorf("failed to query customer: %w", err)
 	}
 
-	filter := bson.M{"customer_id": customer.CustomerID}
-	update := bson.M{"$set": customer}
-	opts := options.Update().SetUpsert(true)
+	// ----------- PRODUCT CHECK -------------
+	productColl := dl.repo.GetCollection("products")
+	var existingProduct Product
+	err = productColl.FindOne(ctx, bson.M{"product_id": record.ProductID}).Decode(&existingProduct)
+	if err == mongo.ErrNoDocuments {
 
-	if _, err := dl.repo.GetCollection("customers").UpdateOne(ctx, filter, update, opts); err != nil {
-		return fmt.Errorf("failed to upsert customer: %w", err)
-	}
-	unitPrice, _ := strconv.ParseFloat(record.UnitPrice, 64)
-	discount, _ := strconv.ParseFloat(record.Discount, 64)
-	// Upsert product
-	product := Product{
-		ProductID: record.ProductID,
-		Name:      record.ProductName,
-		Category:  record.Category,
-		UnitPrice: unitPrice,
-		Discount:  discount,
-	}
+		unitPrice, _ := strconv.ParseFloat(record.UnitPrice, 64)
+		discount, _ := strconv.ParseFloat(record.Discount, 64)
 
-	filter = bson.M{"product_id": product.ProductID}
-	update = bson.M{"$set": product}
-
-	if _, err := dl.repo.GetCollection("products").UpdateOne(ctx, filter, update, opts); err != nil {
-		return fmt.Errorf("failed to upsert product: %w", err)
+		product := Product{
+			ProductID: record.ProductID,
+			Name:      record.ProductName,
+			Category:  record.Category,
+			UnitPrice: unitPrice,
+			Discount:  discount,
+		}
+		if _, err := productColl.InsertOne(ctx, product); err != nil {
+			return fmt.Errorf("failed to insert product: %w", err)
+		}
+	} else if err != nil {
+		return fmt.Errorf("failed to query product: %w", err)
 	}
 
-	// Parse order data
-	dateOfSale, err := time.Parse("2006-01-02", record.DateOfSale)
-	if err != nil {
-		return fmt.Errorf("failed to parse date: %w", err)
-	}
+	// ----------- ORDER CHECK -------------
+	orderColl := dl.repo.GetCollection("orders")
+	var existingOrder Order
+	err = orderColl.FindOne(ctx, bson.M{"order_id": record.OrderID}).Decode(&existingOrder)
+	if err == mongo.ErrNoDocuments {
 
-	quantitySold, _ := strconv.Atoi(record.QuantitySold)
-	shippingCost, _ := strconv.ParseFloat(record.ShippingCost, 64)
+		dateOfSale, err := time.Parse("2006-01-02", record.DateOfSale)
+		if err != nil {
+			return fmt.Errorf("failed to parse date: %w", err)
+		}
 
-	// Upsert order
-	order := Order{
-		OrderID:       record.OrderID,
-		ProductID:     record.ProductID,
-		CustomerID:    record.CustomerID,
-		Region:        record.Region,
-		DateOfSale:    dateOfSale,
-		QuantitySold:  quantitySold,
-		ShippingCost:  shippingCost,
-		PaymentMethod: record.PaymentMethod,
-	}
+		quantitySold, _ := strconv.Atoi(record.QuantitySold)
+		shippingCost, _ := strconv.ParseFloat(record.ShippingCost, 64)
 
-	filter = bson.M{"order_id": order.OrderID}
-	update = bson.M{"$set": order}
+		order := Order{
+			OrderID:       record.OrderID,
+			ProductID:     record.ProductID,
+			CustomerID:    record.CustomerID,
+			Region:        record.Region,
+			DateOfSale:    dateOfSale,
+			QuantitySold:  quantitySold,
+			ShippingCost:  shippingCost,
+			PaymentMethod: record.PaymentMethod,
+		}
 
-	if _, err := dl.repo.GetCollection("orders").UpdateOne(ctx, filter, update, opts); err != nil {
-		return fmt.Errorf("failed to upsert order: %w", err)
+		if _, err := orderColl.InsertOne(ctx, order); err != nil {
+			return fmt.Errorf("failed to insert order: %w", err)
+		}
+
+	} else if err != nil {
+		return fmt.Errorf("failed to query order: %w", err)
 	}
 
 	return nil
@@ -202,19 +216,19 @@ func (dl *DataLoader) parseCSVRow(row []string) CSVRecord {
 	}
 }
 
-// clearCollections removes all documents from collections
-func (dl *DataLoader) clearCollections(ctx context.Context) error {
-	collections := []string{"customers", "products", "orders"}
+// // clearCollections removes all documents from collections
+// func (dl *DataLoader) clearCollections(ctx context.Context) error {
+// 	collections := []string{"customers", "products", "orders"}
 
-	for _, coll := range collections {
-		if _, err := dl.repo.GetCollection(coll).DeleteMany(ctx, bson.M{}); err != nil {
-			return err
-		}
-	}
+// 	for _, coll := range collections {
+// 		if _, err := dl.repo.GetCollection(coll).DeleteMany(ctx, bson.M{}); err != nil {
+// 			return err
+// 		}
+// 	}
 
-	log.Println("Cleared all collections")
-	return nil
-}
+// 	log.Println("Cleared all collections")
+// 	return nil
+// }
 
 // logRefresh logs the data refresh operation
 func (dl *DataLoader) logRefresh(ctx context.Context, startTime time.Time, status string, rowsLoaded int, errorMsg string) error {
